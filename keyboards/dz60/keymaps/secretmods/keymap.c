@@ -48,12 +48,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	mods_pressed = get_mods();
 	if (mods_pressed & MOD_BIT(KC_LSHIFT)) {
 	  register_code(KC_BSLASH);
-	  unregister_code(KC_BSLASH);
 	} else {
 	  register_code(KC_BSPACE);
-	  unregister_code(KC_BSPACE);
 	}
+      } else {
+	if (mods_pressed & MOD_BIT(KC_LSHIFT)) {
+	  unregister_code(KC_BSLASH);
+	} else {
+	  unregister_code(KC_BSPACE);
+	}	
       }
+      return false;
   }
   // default:
   lshift_lbrace_interrupted = true;
