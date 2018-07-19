@@ -8,15 +8,31 @@
 enum custom_keycodes {
   MY_LSHIFT_LBRACE = SAFE_RANGE,
   MY_RSHIFT_RBRACE,
-  MY_BACKSPACE_PIPE
+  MY_BACKSPACE_PIPE,
+  MY_LSPO
 };
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   static uint8_t mods_pressed;
   static bool lshift_lbrace_interrupted = false;
   static bool rshift_rbrace_interrupted = false;
+  static bool lspo_interrupted = false;
   static uint16_t lshift_lbrace_timer = 0;
   static uint16_t rshift_rbrace_timer = 0;
+  static uint16_t lspo_timer = 0;
   switch(keycode) {
+    case MY_LSPO:
+      if (record->event.pressed) {
+	lspo_interrupted = false;
+        lspo_timer = timer_read();
+        register_mods(MOD_BIT(KC_LSHIFT));
+      } else {
+	if (!lspo_interrupted && timer_elapsed(lspo_timer) < 200) {
+	  register_code(KC_9);
+	  unregister_code(KC_9);
+	}
+	unregister_mods(MOD_BIT(KC_LSHIFT));
+      }
+      return false;
     case MY_LSHIFT_LBRACE:
       if (record->event.pressed) {
         lshift_lbrace_interrupted = false;
@@ -44,6 +60,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
     case MY_BACKSPACE_PIPE:
+      // TODO(rob): all of these 'interrupted' states should be handled in a central place!! christ.
+      lspo_interrupted = true;
       if (record->event.pressed) {
 	mods_pressed = get_mods();
 	if (mods_pressed & MOD_BIT(KC_LSHIFT)) {
@@ -60,9 +78,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
   }
+  // TODO(rob): should this state be set differently?  currently this won't run for anything checked in the switch statement
   // default:
   lshift_lbrace_interrupted = true;
   rshift_rbrace_interrupted = true;
+  lspo_interrupted = true;
   return true;
 };
 
@@ -136,7 +156,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
          KC_GRV, KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_EQL, KC_BSLASH, TD(TD_ESC_FORCEQUIT),
          KC_TAB, KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P, KC_LBRC, KC_RBRC, MY_BACKSPACE_PIPE,
          KC_LCTL, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_SCLN, KC_QUOT, KC_ENT,
-         KC_LSPO, KC_NO, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSPC, KC_NO,
+         MY_LSPO, KC_NO, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSPC, KC_NO,
          MO(_FN), KC_LALT, KC_LGUI, KC_SPC, KC_SPC, KC_SPC, KC_LEFT, KC_DOWN, KC_UP, KC_RIGHT, MO(_FN)),
   // standard fn layer
   [_FN] = LAYOUT(
@@ -144,7 +164,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
          KC_TRNS, RGB_TOG, RGB_VAD, RGB_VAI, RGB_MODE_PLAIN, RGB_MODE_BREATHE, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_DELETE,
          KC_CAPS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_MEDIA_PLAY_PAUSE,
          MY_LSHIFT_LBRACE, KC_TRNS, KC_TRNS, KC_TRNS, BL_DEC, BL_TOGG, BL_INC, KC_NUMLOCK, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, MY_RSHIFT_RBRACE, KC_TRNS,
-         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, TG(_WASD), KC_MEDIA_PREV_TRACK, KC_PGDOWN, KC_PGUP, KC_MEDIA_NEXT_TRACK),
+         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_MEDIA_PREV_TRACK, KC_PGDOWN, KC_PGUP, KC_MEDIA_NEXT_TRACK, TG(_WASD)),
 
   // wasd layer, activated during numlock
   [_WASD] = LAYOUT(
