@@ -6,62 +6,12 @@
 
 // custom keycodes
 enum custom_keycodes {
-  MY_LSHIFT_LBRACE = SAFE_RANGE,
-  MY_RSHIFT_RBRACE,
-  MY_BACKSPACE_PIPE,
-  MY_LSPO
+  MY_BACKSPACE_PIPE = SAFE_RANGE
 };
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   static uint8_t mods_pressed;
-  static bool lshift_lbrace_interrupted = false;
-  static bool rshift_rbrace_interrupted = false;
-  static bool lspo_interrupted = false;
-  static uint16_t lshift_lbrace_timer = 0;
-  static uint16_t rshift_rbrace_timer = 0;
-  static uint16_t lspo_timer = 0;
   switch(keycode) {
-    case MY_LSPO:
-      if (record->event.pressed) {
-	lspo_interrupted = false;
-        lspo_timer = timer_read();
-        register_mods(MOD_BIT(KC_LSHIFT));
-      } else {
-	if (!lspo_interrupted && timer_elapsed(lspo_timer) < 200) {
-	  register_code(KC_9);
-	  unregister_code(KC_9);
-	}
-	unregister_mods(MOD_BIT(KC_LSHIFT));
-      }
-      return false;
-    case MY_LSHIFT_LBRACE:
-      if (record->event.pressed) {
-        lshift_lbrace_interrupted = false;
-        lshift_lbrace_timer = timer_read();
-        register_mods(MOD_BIT(KC_LSHIFT));
-      } else {
-        if (!lshift_lbrace_interrupted && timer_elapsed(lshift_lbrace_timer) < 200) {
-          register_code(KC_LBRACKET);
-          unregister_code(KC_LBRACKET);
-        }
-        unregister_mods(MOD_BIT(KC_LSHIFT));
-      }
-      return false;
-    case MY_RSHIFT_RBRACE:
-      if (record->event.pressed) {
-        rshift_rbrace_interrupted = false;
-        rshift_rbrace_timer = timer_read();
-        register_mods(MOD_BIT(KC_RSHIFT));
-      } else {
-        if (!rshift_rbrace_interrupted && timer_elapsed(rshift_rbrace_timer) < 200) {
-          register_code(KC_RBRACKET);
-          unregister_code(KC_RBRACKET);
-        }
-        unregister_mods(MOD_BIT(KC_RSHIFT));
-      }
-      return false;
     case MY_BACKSPACE_PIPE:
-      // TODO(rob): all of these 'interrupted' states should be handled in a central place!! christ.
-      lspo_interrupted = true;
       if (record->event.pressed) {
 	mods_pressed = get_mods();
 	if (mods_pressed & MOD_BIT(KC_LSHIFT)) {
@@ -78,11 +28,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
   }
-  // TODO(rob): should this state be set differently?  currently this won't run for anything checked in the switch statement
-  // default:
-  lshift_lbrace_interrupted = true;
-  rshift_rbrace_interrupted = true;
-  lspo_interrupted = true;
   return true;
 };
 
